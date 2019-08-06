@@ -4,7 +4,7 @@ import sys
 import os
 import glob
 from datetime import datetime
-
+import hashlib
 
 class Z2scanner:
     def __init__(self, sig):
@@ -41,8 +41,12 @@ class Z2scanner:
 
     def match(self, filename):
         output_format = "target_path:%s\tscanner_version:%s\tscan_date: %s\tis_malicious:%s\treason_method:%s"
-        with open(filename, 'r') as f:
-            if self.sig == f.read().strip():
+        md5 = hashlib.md5()
+        with open(filename, 'rb') as f:
+            for chunk in iter(lambda: f.read(2048 * md5.block_size), b''):
+                md5.update(chunk)
+                checksum = md5.hexdigest()
+            if self.sig == checksum:
                 reason_method = "Embedded-Signatures"
             else:
                 reason_method = ""
